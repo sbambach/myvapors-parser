@@ -1,0 +1,1 @@
+SUBSYSTEM=="block", ACTION=="add", ATTRS{idVendor}=="0603", ATTRS{idProduct}=="b5d1", RUN+="/bin/sh /home/stefanb/bin/evic_connected $env{ACTION} $env{DEVNAME}"

@@ -1,0 +1,56 @@
+#!/bin/bash
+
+ACTION=$1
+DEVNAME=$2
+TMPFILE=/tmp/evic.dat
+logger evic test $ACTION $DEVNAME .
+
+###############################
+# read serial number
+SERIAL=$(sg_raw -r 1024 -n -b $DEVNAME c9 80 03 00 80 00 00 04 00 00 2>/dev/null | hexdump -s 0x10 -n 4 -e '4/1 "%02X"' | xargs echo "ibase=16;" | bc)
+if [ "x${SERIAL}" = "x" ]; then
+	logger evic: error getting serial from device. exiting.
+	DISPLAY=:0 sudo -u stefanb notify-send "eVIC" "Error getting serial. Aborting import!"
+	exit 1
+fi
+logger evic connected with serial: $SERIAL
+
+###############################
+# read config
+CONFIG=/tmp/evic_${SERIAL}.cfg
+sg_raw $DEVNAME cc 80 02 00 80 00 00 04 00 00
+sg_raw -r 1024 -n -o $CONFIG $DEVNAME c9 80 02 00 80 00 00 04 00 00
+
+###############################
+# read data
+total_puffs=$(hexdump -s 0xc -n 4 -e '4/1 "%02X"' $CONFIG | xargs echo "ibase=16;" | bc)
+puff_pages=$(($total_puffs / 128 + 1))
+page_size=1024
+logger evic TotalPuffs: $total_puffs Pages2Read: $puff_pages
+
+DATA=/tmp/evic_${SERIAL}.dat
+rm $DATA
+seek=0
+while true; do
+	seek_hex=$(printf "0x%08X" $seek)
+	logger evic: reading offset $seek_hex
+	seek_parms=$(echo $seek_hex | xxd -r | hexdump -e '4/1 "%02X "')
+
+	# seek
+	sg_raw $DEVNAME cb 80 $seek_parms 00 04 00 00
+	# read
+	DATAPART=/tmp/evic_${SERIAL}_${seek_hex}.dat
+	sg_raw -r 1024 -n -o $DATAPART $DEVNAME c9 80 02 00 80 00 00 04 00 00
+
+	# append part to outputfile
+	cat $DATAPART >> $DATA
+
+	seek=$(($seek + 1024))
+	puff_pages=$(($puff_pages - 1))
+	[ $puff_pages -le 0 ] && break
+done
+
+logger evic: wrote $(stat -c%s $CONFIG) bytes config to $CONFIG
+logger evic: wrote $(stat -c%s $DATA) bytes data to $DATA 
+
+DISPLAY=:0 sudo -u stefanb notify-send "eVIC" "wrote $(stat -c%s $CONFIG) bytes config to $CONFIG \n wrote $(stat -c%s $DATA) bytes data to $DATA"
