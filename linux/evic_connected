@@ -50,7 +50,10 @@ while true; do
 	[ $puff_pages -le 0 ] && break
 done
 
+/home/stefanb/bin/myvapors-parser/myvapors-database-to-csv --database $DATA 2>/dev/null > ${DATA}.csv
+
 logger evic: wrote $(stat -c%s $CONFIG) bytes config to $CONFIG
 logger evic: wrote $(stat -c%s $DATA) bytes data to $DATA 
+logger evic: wrote $(stat -c%s ${DATA}.csv) bytes data to ${DATA}.csv
 
-DISPLAY=:0 sudo -u stefanb notify-send "eVIC" "wrote $(stat -c%s $CONFIG) bytes config to $CONFIG \n wrote $(stat -c%s $DATA) bytes data to $DATA"
+DISPLAY=:0 sudo -u stefanb notify-send "eVIC" "wrote $(stat -c%s $CONFIG) bytes config to $CONFIG \nwrote $(stat -c%s $DATA) bytes data to $DATA \nwrote $(stat -c%s ${DATA}.csv) bytes data to ${DATA}.csv"
