@@ -9,11 +9,18 @@ TMPFILE=/tmp/evic.dat
 logger evic: $DEVNAME
 
 ###############################
+# get some vars
+
+PID=$(ps -ef | grep gnome-keyring-daemon | grep -v grep |awk '{print $2}')
+USER=$(ps -ef | grep gnome-keyring-daemon | grep -v grep |awk '{print $1}')
+DISPLAY=$(grep -z DISPLAY /proc/$PID/environ)
+
+###############################
 # read serial number
 SERIAL=$(sg_raw -r 1024 -n -b $DEVNAME c9 80 03 00 80 00 00 04 00 00 2>/dev/null | hexdump -s 0x10 -n 4 -e '4/1 "%02X"' | xargs echo "ibase=16;" | bc)
 if [ "x${SERIAL}" = "x" ]; then
 	logger evic: error getting serial from device. exiting.
-	DISPLAY=:0 sudo -u stefanb notify-send "eVIC" "Error getting serial. Aborting import!"
+	sudo -u $USER $DISPLAY notify-send "eVIC" "Error getting serial. Aborting import!"
 	exit 1
 fi
 logger evic connected with serial: $SERIAL
@@ -59,4 +66,4 @@ logger evic: wrote $(stat -c%s $CONFIG) bytes config to $CONFIG
 logger evic: wrote $(stat -c%s $DATA) bytes data to $DATA 
 logger evic: wrote $(stat -c%s ${DATA}.csv) bytes data to ${DATA}.csv
 
-DISPLAY=:0 sudo -u stefanb notify-send "eVIC" "wrote $(stat -c%s $CONFIG) bytes config to $CONFIG \nwrote $(stat -c%s $DATA) bytes data to $DATA \nwrote $(stat -c%s ${DATA}.csv) bytes data to ${DATA}.csv"
+sudo -u $USER $DISPLAY notify-send "eVIC" "wrote $(stat -c%s $CONFIG) bytes config to $CONFIG \nwrote $(stat -c%s $DATA) bytes data to $DATA \nwrote $(stat -c%s ${DATA}.csv) bytes data to ${DATA}.csv"
