@@ -1,9 +1,12 @@
 #!/bin/bash
 
-ACTION=$1
-DEVNAME=$2
+[ "x${DEVNAME}" == "x" ] && DEVNAME=$1
+if [ "x${DEVNAME}" == "x" ]; then
+	logger evic: no DEVNAME given. existing.
+	exit 1
+fi
 TMPFILE=/tmp/evic.dat
-logger evic test $ACTION $DEVNAME .
+logger evic: $DEVNAME
 
 ###############################
 # read serial number
@@ -33,7 +36,7 @@ rm $DATA
 seek=0
 while true; do
 	seek_hex=$(printf "0x%08X" $seek)
-	logger evic: reading offset $seek_hex
+	#logger evic: reading offset $seek_hex
 	seek_parms=$(echo $seek_hex | xxd -r | hexdump -e '4/1 "%02X "')
 
 	# seek

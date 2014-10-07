@@ -1,0 +1,5 @@
+# service udev restart
+# udevadm control --reload-rules
+#ACTION=="add", KERNEL=="sd?", SUBSYSTEM=="block", ATTRS{idVendor}=="0603", ATTRS{idProduct}=="b5d1", OPTIONS+="last_rule", RUN+="/bin/bash /home/stefanb/bin/myvapors-parser/linux/evic_connected $env{ACTION} $env{DEVNAME}"
+#ACTION=="add", SUBSYSTEM=="block", ATTRS{idVendor}=="0603", ATTRS{idProduct}=="b5d1", RUN+="/bin/bash /home/stefanb/bin/myvapors-parser/linux/evic_connected $env{ACTION} $env{DEVNAME}"
+ACTION=="add", SUBSYSTEM=="block", ATTRS{idVendor}=="0603", ATTRS{idProduct}=="b5d1", RUN+="/bin/bash /home/stefanb/bin/myvapors-parser/linux/evic_connected"
